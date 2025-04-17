@@ -6,40 +6,50 @@ public partial class Main : Node2D
 {
 	private StreamPeerTcp tcp = new StreamPeerTcp();
 	private bool connected = false;
-	private string ipAddress = "192.168.243.49";
-	private int port = 8080;
+	private string ipAddress = "47.108.90.0";
+	private int port = 9090;
 	private float connectionTimeout = 2.0f;  // 秒
 	private double connectStartTime = 0.0;
 	private bool isProcessingCommand = false; // 用于非按压式控制
-	private ulong lastStopTime = 0; // 新增：上次停止命令的时间
-	private bool isStopPending = false; // 新增：是否有待执行的停止命令
+	private bool isAutoForwardAfterRotation = true;
 	private string currentCommand = ""; // 当前正在发送的命令
 	private ulong lastCommandTime = 0; // 上次发送命令的时间
 	private const ulong COMMAND_INTERVAL = 500; // 命令发送间隔（毫秒）
+	private const ulong STOP_INTERVAL = 300; // 停止命令最小间隔（毫秒）
+	private ulong lastStopTime = 0; // 上次发送停止命令的时间
 
 	// UI组件引用
 	private LineEdit ipInput;
 	private LineEdit portInput;
-	private LineEdit delayedInput;
 	private Button connectButton;
 	private Button OKBtn;
 	private Label statusLabel;
-	private HSlider pwm1Slider;
-	private HSlider pwm2Slider;
+	private LineEdit pwm1Speed;
+	private LineEdit pwm2Speed;
+	private CheckButton toggleAutoForward;
+	private Button rotationSpeedModifyBtn;
 
-	//点击式控制
+//-------------点击式控制-------------
 	private Button stopButton;
 	private Button forwardButton;
 	private Button backwardButton;
 
+	private Button left10Btn;
+	private Button left15Btn;
+	private Button left30Btn;
 	private Button left45Btn;
 	private Button left90Btn;
 	private Button left180Btn;
+
+	private Button right10Btn;
+	private Button right15Btn;
+	private Button right30Btn;
 	private Button right45Btn;
 	private Button right90Btn;
 	private Button right180Btn;
 
-	//按压式控制
+
+//-------------按压式控制-------------
 	private Button stopBtn;
 	private Button forwardBtn;
 	private Button backwardBtn;
@@ -50,7 +60,6 @@ public partial class Main : Node2D
 	// 电机参数
 	private int pwm1 = 60;
 	private int pwm2 = 60;
-	private int delayedTime = 260;
 
 	// 方向控制状态
 	private bool movingForward = false;
@@ -63,45 +72,30 @@ public partial class Main : Node2D
 		// 获取节点引用
 		ipInput = GetNode<LineEdit>("IPInput");
 		portInput = GetNode<LineEdit>("PortInput");
-		delayedInput = GetNode<LineEdit>("DelayedInput");
 		connectButton = GetNode<Button>("ConnectButton");
-		OKBtn = GetNode<Button>("OKBtn");
 		statusLabel = GetNode<Label>("StatusLabel");
-		pwm1Slider = GetNode<HSlider>("PWM1Slider");
-		pwm2Slider = GetNode<HSlider>("PWM2Slider");
+		pwm1Speed = GetNode<LineEdit>("PWM1Speed");
+		pwm2Speed = GetNode<LineEdit>("PWM2Speed");
+		toggleAutoForward = GetNode<CheckButton>("autoForwardAfterRotationBtn");
+		rotationSpeedModifyBtn = GetNode<Button>("rotationSpeedModifyBtn");
 
 		// 初始化UI
 		portInput.Text = port.ToString();
 		ipInput.Text = ipAddress;
-		pwm1Slider.Value = pwm1;
-		pwm2Slider.Value = pwm2;
+		pwm1Speed.Text = pwm1.ToString();
+		pwm2Speed.Text = pwm2.ToString();
 
-		// 连接信号
+		pwm1Speed.TextChanged += OnPwm1SpeedChanged;
+		pwm2Speed.TextChanged += OnPwm2SpeedChanged;
 		connectButton.Pressed += OnConnectButtonPressed;
-		OKBtn.Pressed += OnOKBtnPressed;
-		pwm1Slider.ValueChanged += OnPwm1Changed;
-		pwm2Slider.ValueChanged += OnPwm2Changed;
-
-		stopButton = GetNode<Button>("clickBasedControl/StopButton");
-		forwardButton = GetNode<Button>("clickBasedControl/ForwardButton");
-		backwardButton = GetNode<Button>("clickBasedControl/BackwardButton");
-
+		toggleAutoForward.Toggled += OnAutoForwardToggle;
+		rotationSpeedModifyBtn.Pressed += OnRotationSpeedModifyPressed;
+		//按压式控制
 		forwardBtn = GetNode<Button>("pressBasedControl/ForwardBtn");
 		backwardBtn = GetNode<Button>("pressBasedControl/BackwardBtn");
 		leftBtn = GetNode<Button>("pressBasedControl/LeftBtn");
 		rightBtn = GetNode<Button>("pressBasedControl/RightBtn");
 
-		stopButton.Pressed += OnStopPressed;
-		forwardButton.Pressed += OnForwardPressed;
-		backwardButton.Pressed += OnBackPressed;
-
-        left45Btn = GetNode<Button>("clickBasedControl/Left45Btn");
-        left90Btn = GetNode<Button>("clickBasedControl/Left90Btn");
-        left180Btn = GetNode<Button>("clickBasedControl/Left180Btn");
-        right45Btn = GetNode<Button>("clickBasedControl/Right45Btn");
-        right90Btn = GetNode<Button>("clickBasedControl/Right90Btn");
-        right180Btn = GetNode<Button>("clickBasedControl/Right180Btn");
-        
 
 		forwardBtn.ButtonDown += OnForwardButtonDown;
 		forwardBtn.ButtonUp += OnForwardButtonUp;
@@ -111,23 +105,122 @@ public partial class Main : Node2D
 		leftBtn.ButtonUp += OnLeftButtonUp;
 		rightBtn.ButtonDown += OnRightButtonDown;
 		rightBtn.ButtonUp += OnRightButtonUp;
-		
-		// 连接新的旋转按钮事件
-		left45Btn.Pressed += OnLeft45Pressed;
-		left90Btn.Pressed += OnLeft90Pressed;
-		left180Btn.Pressed += OnLeft180Pressed;
-		right45Btn.Pressed += OnRight45Pressed;
-		right90Btn.Pressed += OnRight90Pressed;
-		right180Btn.Pressed += OnRight180Pressed;
+
+		//点击式控制
+		stopButton = GetNode<Button>("clickBasedControl/StopBtn");
+		forwardButton = GetNode<Button>("clickBasedControl/ForwardBtn");
+		backwardButton = GetNode<Button>("clickBasedControl/BackwardBtn");
+
+		stopButton.Pressed += OnStopPressed;
+		forwardButton.Pressed += OnForwardPressed;
+		backwardButton.Pressed += OnBackPressed;
+
+		left10Btn = GetNode<Button>("clickBasedControl/Left10Btn");
+		left15Btn = GetNode<Button>("clickBasedControl/Left15Btn");
+		left30Btn = GetNode<Button>("clickBasedControl/Left30Btn");
+        left45Btn = GetNode<Button>("clickBasedControl/Left45Btn");
+        left90Btn = GetNode<Button>("clickBasedControl/Left90Btn");
+        left180Btn = GetNode<Button>("clickBasedControl/Left180Btn");
+
+		right10Btn = GetNode<Button>("clickBasedControl/Right10Btn");
+		right15Btn = GetNode<Button>("clickBasedControl/Right15Btn");
+		right30Btn = GetNode<Button>("clickBasedControl/Right30Btn");		
+        right45Btn = GetNode<Button>("clickBasedControl/Right45Btn");
+        right90Btn = GetNode<Button>("clickBasedControl/Right90Btn");
+        right180Btn = GetNode<Button>("clickBasedControl/Right180Btn");
+        
+		//连接点击式旋转按钮事件
+		left10Btn.Pressed += () => leftTurnTypeControl("10");
+		left15Btn.Pressed += () => leftTurnTypeControl("15");
+		left30Btn.Pressed += () => leftTurnTypeControl("30");		
+		left45Btn.Pressed += () => leftTurnTypeControl("45");
+		left90Btn.Pressed += () => leftTurnTypeControl("90");
+		left180Btn.Pressed += () => leftTurnTypeControl("180");
+ 
+		right10Btn.Pressed += () => rightTurnTypeControl("10");
+		right15Btn.Pressed += () => rightTurnTypeControl("15");
+		right30Btn.Pressed += () => rightTurnTypeControl("30");
+		right45Btn.Pressed += () => rightTurnTypeControl("45");
+		right90Btn.Pressed += () => rightTurnTypeControl("90");
+		right180Btn.Pressed += () => rightTurnTypeControl("180");
 
 	}
 
-	public override void _Process(double delta)
+    private void OnPwm1SpeedChanged(string newText)
+    {
+        if(newText.IsValidInt()){
+            pwm1 = int.Parse(newText);
+            if(pwm1 > 100){
+                pwm1 = 100;
+                pwm1Speed.Text = "100";
+            }
+            if(pwm2 > 100){
+                pwm2 = 100;
+                pwm2Speed.Text = "100";
+            }
+            if(pwm1 < 0){
+                pwm1 = 0;
+                pwm1Speed.Text = "0";
+            }
+            if(pwm2 < 0){
+                pwm2 = 0;
+                pwm2Speed.Text = "0";
+            }
+        }else{
+            pwm1Speed.Text = "0";
+            pwm2Speed.Text = "0";
+        }
+    }
+
+    private void OnPwm2SpeedChanged(string newText)
+    {
+        if(newText.IsValidInt()){
+            pwm2 = int.Parse(newText);
+            if(pwm1 > 100){
+                pwm1 = 100;
+                pwm1Speed.Text = "100";
+            }
+            if(pwm2 > 100){
+                pwm2 = 100;
+                pwm2Speed.Text = "100";
+            }
+            if(pwm1 < 0){
+                pwm1 = 0;
+                pwm1Speed.Text = "0";
+            }
+            if(pwm2 < 0){
+                pwm2 = 0;
+                pwm2Speed.Text = "0";
+            }
+        }else{
+            pwm1Speed.Text = "0";
+            pwm2Speed.Text = "0";
+        }
+    }
+
+    //电机速度控制方法
+
+    private void OnRotationSpeedModifyPressed()
+    {
+        if (!connected) return;
+        SendCommand($"P:{pwm1},{pwm2}", true);
+    }
+
+
+    private void OnAutoForwardToggle(bool toggledOn)
+    {
+		if (!connected) return;
+        if (toggledOn == true){
+			SendCommand("AF",true);
+		}else{
+			SendCommand("AF_OFF",true);
+		}
+    }
+
+    public override void _Process(double delta)
 	{
 		UpdateConnection();
 		ReceiveData();
-		CheckStopCommand();
-		SendContinuousCommand();
 	}
 
 	private void UpdateConnection()
@@ -300,99 +393,77 @@ public partial class Main : Node2D
 		}
 	}
 
-	private void OnPwm1Changed(double value)
-	{
-		pwm1 = (int)value;
-		SendCommand("P1:" + pwm1, true);
-	}
-
-	private void OnPwm2Changed(double value)
-	{
-		pwm2 = (int)value;
-		SendCommand("P2:" + pwm2, true);
-	}
 
 
 
-	// 方向控制方法
+
+
+	//按压式控制函数
 	private void OnForwardButtonDown()
 	{
 		if (!connected) return;
-		movingForward = true;
-		movingBackward = false;
-		currentCommand = "F";
-		SendCommand(currentCommand, false);
-		GD.Print("开始前进");
+		SendCommand("F", false);
+		GD.Print("前进");
 	}
 
 	private void OnForwardButtonUp()
 	{
 		if (!connected) return;
-		movingForward = false;
-		currentCommand = "S";
-		SendCommand(currentCommand, false);
-		GD.Print("停止前进");
+		SendStopCommand();
 	}
 
 	private void OnBackButtonDown()
 	{
 		if (!connected) return;
-		movingBackward = true;
-		movingForward = false;
-		currentCommand = "B";
-		SendCommand(currentCommand, false);
-		GD.Print("开始后退");
+		SendCommand("B", false);
+		GD.Print("后退");
 	}
 
 	private void OnBackButtonUp()
 	{
 		if (!connected) return;
-		movingBackward = false;
-		currentCommand = "S";
-		SendCommand(currentCommand, false);
-		GD.Print("停止后退");
+		SendStopCommand();
 	}
 
 	private void OnLeftButtonDown()
 	{
 		if (!connected) return;
-		movingLeft = true;
-		movingRight = false;
-		currentCommand = "L";
-		SendCommand(currentCommand, false);
-		GD.Print("开始左转");
+		SendCommand("L", false);
+		GD.Print("左转");
 	}
 
 	private void OnLeftButtonUp()
 	{
 		if (!connected) return;
-		movingLeft = false;
-		currentCommand = "S";
-		SendCommand(currentCommand, false);
-		GD.Print("停止左转");
+		SendStopCommand();
 	}
  
 	private void OnRightButtonDown()
 	{
 		if (!connected) return;
-		movingRight = true;
-		movingLeft = false;
-		currentCommand = "R";
-		SendCommand(currentCommand, false);
-		GD.Print("开始右转");
+		SendCommand("R", false);
+		GD.Print("右转");
 	}
 
 	private void OnRightButtonUp()
 	{
 		if (!connected) return;
-		movingRight = false;
-		currentCommand = "S";
-		SendCommand(currentCommand, false);
-		GD.Print("停止右转");
+		SendStopCommand();
+	}
+
+	private void SendStopCommand()
+	{
+		ulong currentTime = Time.GetTicksMsec();
+		if (currentTime - lastStopTime >= STOP_INTERVAL)
+		{
+			SendCommand("S", false);
+			lastStopTime = currentTime;
+			GD.Print("停止");
+		}
 	}
 
 	
-	// 其他控制方法
+	//点击式控制函数
 	private void OnForwardPressed()
 	{
 		SendCommand("F");
@@ -453,25 +524,6 @@ public partial class Main : Node2D
 		GD.Print("连接成功");
 	}
 
-	private void OnStopDelayTimeout()
-	{
-		if (!connected) return;
-		SendCommand("S", false);
-		GD.Print("延迟停止");
-	}
-
-	private void CheckStopCommand()
-	{
-		if (isStopPending && Time.GetTicksMsec() - lastStopTime >= (ulong)delayedTime) // 将 delayedTime 转换为 ulong
-		{
-			if (connected)
-			{
-				SendCommand("S", false);
-				GD.Print("延迟停止");
-			}
-			isStopPending = false;
-		}
-	}
 
 	public override void _Input(InputEvent @event)
 	{
@@ -530,53 +582,16 @@ public partial class Main : Node2D
 	}
 
 
-
-
-	private void OnOKBtnPressed()
-	{
-		delayedTime = int.Parse(delayedInput.Text);
-	}
-
-	private void OnLeft45Pressed()
-	{
+	private void leftTurnTypeControl(String command){
 		if (!connected) return;
-		SendCommand("L45", true);
-		GD.Print("左转45度");
+		SendCommand("L"+command,true);
+		GD.Print("左转"+command+"度");
+	}
+	private void rightTurnTypeControl(String command){
+		if (!connected) return;
+		SendCommand("R"+command,true);
+		GD.Print("右转"+command+"度");
 	}
 
-	private void OnLeft90Pressed()
-	{
-		if (!connected) return;
-		SendCommand("L90", true);
-		GD.Print("左转90度");
-	}
-
-	private void OnLeft180Pressed()
-	{
-		if (!connected) return;
-		SendCommand("L180", true);
-		GD.Print("左转180度");
-	}
-
-	private void OnRight45Pressed()
-	{
-		if (!connected) return;
-		SendCommand("R45", true);
-		GD.Print("右转45度");
-	}
-
-	private void OnRight90Pressed()
-	{
-		if (!connected) return;
-		SendCommand("R90", true);
-		GD.Print("右转90度");
-	}
-
-	private void OnRight180Pressed()
-	{
-		if (!connected) return;
-		SendCommand("R180", true);
-		GD.Print("右转180度");
-	}
 
 }

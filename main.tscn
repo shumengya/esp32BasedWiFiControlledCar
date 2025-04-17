@@ -17,7 +17,7 @@ offset_left = 900.0
 offset_right = 940.0
 offset_bottom = 40.0
 
-[node name="StopButton" type="Button" parent="clickBasedControl"]
+[node name="StopBtn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
 offset_left = 140.0
 offset_top = 290.0
@@ -27,7 +27,7 @@ scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 20
 text = "停止"
 
-[node name="BackwardButton" type="Button" parent="clickBasedControl"]
+[node name="BackwardBtn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
 offset_left = 140.0
 offset_top = 390.0
@@ -37,7 +37,7 @@ scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 20
 text = "后退"
 
-[node name="ForwardButton" type="Button" parent="clickBasedControl"]
+[node name="ForwardBtn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
 offset_left = 140.0
 offset_top = 190.0
@@ -50,12 +50,22 @@ text = "前进"
 [node name="Left45Btn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
 offset_left = 40.0
-offset_top = 290.0
+offset_top = 190.0
 offset_right = 90.0
-offset_bottom = 340.0
+offset_bottom = 240.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 15
 text = "-45"
+
+[node name="Left15Btn" type="Button" parent="clickBasedControl"]
+layout_mode = 0
+offset_left = -61.0
+offset_top = 289.0
+offset_right = -11.0
+offset_bottom = 339.0
+scale = Vector2(2, 2)
+theme_override_font_sizes/font_size = 15
+text = "-15"
 
 [node name="Left180Btn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
@@ -67,25 +77,55 @@ scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 15
 text = "-180"
 
+[node name="Left30Btn" type="Button" parent="clickBasedControl"]
+layout_mode = 0
+offset_left = -61.0
+offset_top = 389.0
+offset_right = -11.0
+offset_bottom = 439.0
+scale = Vector2(2, 2)
+theme_override_font_sizes/font_size = 15
+text = "-30"
+
 [node name="Left90Btn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
 offset_left = 40.0
-offset_top = 190.0
+offset_top = 290.0
 offset_right = 90.0
-offset_bottom = 240.0
+offset_bottom = 340.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 15
 text = "-90"
 
+[node name="Left10Btn" type="Button" parent="clickBasedControl"]
+layout_mode = 0
+offset_left = -61.0
+offset_top = 189.0
+offset_right = -11.0
+offset_bottom = 239.0
+scale = Vector2(2, 2)
+theme_override_font_sizes/font_size = 15
+text = "-10"
+
 [node name="Right45Btn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
-offset_left = 240.0
-offset_top = 290.0
-offset_right = 290.0
-offset_bottom = 340.0
+offset_left = 239.0
+offset_top = 190.0
+offset_right = 289.0
+offset_bottom = 240.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 15
 text = "+45"
+
+[node name="Right15Btn" type="Button" parent="clickBasedControl"]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 290.0
+offset_right = 390.0
+offset_bottom = 340.0
+scale = Vector2(2, 2)
+theme_override_font_sizes/font_size = 15
+text = "+15"
 
 [node name="Right180Btn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
@@ -97,15 +137,35 @@ scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 15
 text = "+180"
 
+[node name="Right30Btn" type="Button" parent="clickBasedControl"]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 391.0
+offset_right = 390.0
+offset_bottom = 441.0
+scale = Vector2(2, 2)
+theme_override_font_sizes/font_size = 15
+text = "+30"
+
 [node name="Right90Btn" type="Button" parent="clickBasedControl"]
 layout_mode = 0
-offset_left = 240.0
-offset_top = 190.0
-offset_right = 290.0
-offset_bottom = 240.0
+offset_left = 239.0
+offset_top = 290.0
+offset_right = 289.0
+offset_bottom = 340.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 15
 text = "+90"
+
+[node name="Right10Btn" type="Button" parent="clickBasedControl"]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 190.0
+offset_right = 390.0
+offset_bottom = 240.0
+scale = Vector2(2, 2)
+theme_override_font_sizes/font_size = 15
+text = "+10"
 
 [node name="pressBasedControl" type="Control" parent="."]
 layout_mode = 3
@@ -116,9 +176,9 @@ offset_bottom = 110.0
 
 [node name="RightBtn" type="Button" parent="pressBasedControl"]
 layout_mode = 0
-offset_left = 350.0
+offset_left = 320.0
 offset_top = 248.0
-offset_right = 420.0
+offset_right = 390.0
 offset_bottom = 318.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 40
@@ -126,9 +186,9 @@ text = "→"
 
 [node name="LeftBtn" type="Button" parent="pressBasedControl"]
 layout_mode = 0
-offset_left = 67.0
+offset_left = 40.0
 offset_top = 248.0
-offset_right = 137.0
+offset_right = 110.0
 offset_bottom = 318.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 40
@@ -136,28 +196,28 @@ text = "←"
 
 [node name="StopBtn" type="Button" parent="pressBasedControl"]
 layout_mode = 0
-offset_left = 210.0
+offset_left = 180.0
 offset_top = 248.0
-offset_right = 280.0
+offset_right = 250.0
 offset_bottom = 318.0
 scale = Vector2(2, 2)
 disabled = true
 
 [node name="BackwardBtn" type="Button" parent="pressBasedControl"]
 layout_mode = 0
-offset_left = 210.0
-offset_top = 391.0
-offset_right = 280.0
-offset_bottom = 461.0
+offset_left = 180.0
+offset_top = 388.0
+offset_right = 250.0
+offset_bottom = 458.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 40
 text = "↓"
 
 [node name="ForwardBtn" type="Button" parent="pressBasedControl"]
 layout_mode = 0
-offset_left = 210.0
+offset_left = 180.0
 offset_top = 108.0
-offset_right = 280.0
+offset_right = 250.0
 offset_bottom = 178.0
 scale = Vector2(2, 2)
 theme_override_font_sizes/font_size = 40
@@ -189,27 +249,23 @@ offset_bottom = 105.0
 theme_override_font_sizes/font_size = 30
 text = "连接"
 
-[node name="OKBtn" type="Button" parent="."]
-offset_left = 871.0
-offset_top = 108.0
-offset_right = 939.0
-offset_bottom = 160.0
-theme_override_font_sizes/font_size = 30
-text = "确定"
-
-[node name="PWM1Slider" type="HSlider" parent="."]
-offset_left = 267.0
-offset_top = 629.0
-offset_right = 478.0
-offset_bottom = 652.0
+[node name="PWM1Speed" type="LineEdit" parent="."]
+offset_left = 377.0
+offset_top = 566.0
+offset_right = 466.0
+offset_bottom = 597.0
 scale = Vector2(2, 2)
+placeholder_text = "左电机转速"
+alignment = 1
 
-[node name="PWM2Slider" type="HSlider" parent="."]
-offset_left = 267.0
-offset_top = 676.0
-offset_right = 478.0
-offset_bottom = 699.0
+[node name="PWM2Speed" type="LineEdit" parent="."]
+offset_left = 377.0
+offset_top = 628.0
+offset_right = 466.0
+offset_bottom = 659.0
 scale = Vector2(2, 2)
+placeholder_text = "右电机转速"
+alignment = 1
 
 [node name="PortInput" type="LineEdit" parent="."]
 offset_left = 751.0
@@ -217,31 +273,23 @@ offset_top = 53.0
 offset_right = 871.0
 offset_bottom = 105.0
 theme_override_font_sizes/font_size = 30
-text = "45678"
+text = "9090"
 placeholder_text = "端口"
 alignment = 1
 
-[node name="DelayedInput" type="LineEdit" parent="."]
-offset_left = 381.0
-offset_top = 108.0
-offset_right = 871.0
-offset_bottom = 162.0
-theme_override_font_sizes/font_size = 30
-text = "260"
-placeholder_text = "修改延迟，注意太低会导致控制失效"
-alignment = 1
-
-[node name="Label" type="Label" parent="."]
-offset_left = 177.0
+[node name="pressBasedControlLabel" type="Label" parent="."]
+modulate = Color(1, 1, 0, 1)
+offset_left = 150.0
 offset_top = 123.0
-offset_right = 377.0
+offset_right = 350.0
 offset_bottom = 178.0
 theme_override_font_sizes/font_size = 40
 text = "按压式控制"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Label2" type="Label" parent="."]
+[node name="clickBasedControlLabel" type="Label" parent="."]
+modulate = Color(1, 0.372549, 0.72549, 1)
 offset_left = 989.0
 offset_top = 135.0
 offset_right = 1189.0
@@ -250,3 +298,30 @@ theme_override_font_sizes/font_size = 40
 text = "点击式控制"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="MotorRotationSpeed" type="Label" parent="."]
+modulate = Color(0.560371, 0.412288, 5.77569e-07, 1)
+offset_left = 435.0
+offset_top = 524.0
+offset_right = 555.0
+offset_bottom = 566.0
+theme_override_font_sizes/font_size = 30
+text = "电机转速"
+
+[node name="autoForwardAfterRotationBtn" type="CheckButton" parent="."]
+modulate = Color(0, 0.466667, 0.870588, 1)
+offset_left = 839.0
+offset_top = 491.0
+offset_right = 1027.0
+offset_bottom = 527.0
+scale = Vector2(1.8, 1.8)
+theme_override_font_sizes/font_size = 20
+text = "旋转后自动前进"
+
+[node name="rotationSpeedModifyBtn" type="Button" parent="."]
+offset_left = 555.0
+offset_top = 566.0
+offset_right = 623.0
+offset_bottom = 690.0
+theme_override_font_sizes/font_size = 30
+text = "确定"

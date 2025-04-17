@@ -30,6 +30,8 @@ pwm1 = 60
 pwm2 = 60
 current_flag = 0
 LED2.off()
+isAutoForward = True
+
 
 def map_value(x, in_min, in_max, out_min, out_max):
     return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
@@ -73,7 +75,7 @@ def update_motor():
         set_motor(-pwm1, pwm2)
 
 def handle_command(cmd):
-    global current_flag, pwm1, pwm2
+    global current_flag, pwm1, pwm2, isAutoForward
     cmd = cmd.strip()
     print("接收到命令:", cmd)
     
@@ -92,36 +94,33 @@ def handle_command(cmd):
     elif cmd == 'S':
         current_flag = 5
         set_motor(0, 0)
+
+    elif cmd == 'L10':
+        leftTurnTypeControl(0.1)
+    elif cmd == 'L15':
+        leftTurnTypeControl(0.2)
+    elif cmd == 'L30':
+        leftTurnTypeControl(0.3)
     elif cmd == 'L45':
-        current_flag = 3
-        set_motor(0, pwm2)
-        time.sleep(0.5)  # 调整这个时间来控制旋转角度
-        set_motor(0, 0)
+        leftTurnTypeControl(0.5)
     elif cmd == 'L90':
-        current_flag = 3
-        set_motor(0, pwm2)
-        time.sleep(1.0)  # 调整这个时间来控制旋转角度
-        set_motor(0, 0)
+        leftTurnTypeControl(1.0)
     elif cmd == 'L180':
-        current_flag = 3
-        set_motor(0, pwm2)
-        time.sleep(2.0)  # 调整这个时间来控制旋转角度
-        set_motor(0, 0)
+        leftTurnTypeControl(2.0)
+
+    elif cmd == 'R10':
+        rightTurnTypeControl(0.1)
+    elif cmd == 'R15':
+        rightTurnTypeControl(0.2)
+    elif cmd == 'R30':
+        rightTurnTypeControl(0.3)
     elif cmd == 'R45':
-        current_flag = 4
-        set_motor(pwm1, 0)
-        time.sleep(0.5)  # 调整这个时间来控制旋转角度
-        set_motor(0, 0)
+        rightTurnTypeControl(0.5)
     elif cmd == 'R90':
-        current_flag = 4
-        set_motor(pwm1, 0)
-        time.sleep(1.0)  # 调整这个时间来控制旋转角度
-        set_motor(0, 0)
+        rightTurnTypeControl(1.0)
     elif cmd == 'R180':
-        current_flag = 4
-        set_motor(pwm1, 0)
-        time.sleep(2.0)  # 调整这个时间来控制旋转角度
-        set_motor(0, 0)
+        rightTurnTypeControl(2.0)
+
     elif cmd == 'BAG_OPEN':
         BAG.value(0)
     elif cmd == 'BAG_CLOSE':
@@ -130,19 +129,58 @@ def handle_command(cmd):
         BRUSH.value(0)
     elif cmd == 'BRUSH_OFF':
         BRUSH.value(1)
-    elif cmd.startswith('P1:'):
-        pwm1 = int(cmd[3:])
-        update_motor()
-    elif cmd.startswith('P2:'):
-        pwm2 = int(cmd[3:])
-        update_motor()
+    elif cmd.startswith('P:'):
+        try:
+            # 解析格式为 "P:60,60" 的命令
+            values = cmd[2:].split(',')
+            if len(values) == 2:
+                pwm1 = int(values[0])
+                pwm2 = int(values[1])
+                # 确保值在0-100范围内
+                pwm1 = max(0, min(100, pwm1))
+                pwm2 = max(0, min(100, pwm2))
+                update_motor()
+                print(f"设置电机速度: P1={pwm1}%, P2={pwm2}%")
+        except Exception as e:
+            print("PWM设置错误:", e)
+    elif cmd == 'AF':
+        isAutoForward = True
+        print("自动前进已开启")
+    elif cmd == 'AF_OFF':
+        isAutoForward = False
+        print("自动前进已关闭")
+    else:
+        print("未知命令:", cmd)
 
 # 初始化外设
 BRUSH.value(1)  # 默认关闭
 BAG.value(1)    # 默认关闭
+wlan = network.WLAN(network.STA_IF)
 
 # 连接WiFi
-wlan = network.WLAN(network.STA_IF)
+def handleAutoForward(isAutoForward):
+    global current_flag, pwm1, pwm2
+    if isAutoForward:
+        current_flag = 1
+        set_motor(pwm1, pwm2)
+
+def leftTurnTypeControl(delayTime):
+    global current_flag, pwm2
+    current_flag = 3
+    set_motor(0, pwm2)
+    time.sleep(delayTime)  
+    set_motor(0, 0)
+    if isAutoForward:
+        handleAutoForward(isAutoForward)
+
+def rightTurnTypeControl(delayTime):
+    global current_flag, pwm1
+    current_flag = 4
+    set_motor(pwm1, 0)
+    time.sleep(delayTime)  
+    set_motor(0, 0)
+    if isAutoForward:
+        handleAutoForward(isAutoForward)
 
 def reset_wifi():
     global wlan
@@ -203,12 +241,25 @@ if not connect_wifi():
     time.sleep(5)
 
 # 创建TCP Socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind(('0.0.0.0', TCP_PORT))
-sock.listen(1)
+try:
+    # 尝试关闭可能存在的旧连接
+    try:
+        old_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        old_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        old_sock.close()
+    except:
+        pass
 
-print(f"TCP服务器启动在端口： {TCP_PORT}")
-LED2.on()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 添加这行来允许端口重用
+    sock.bind(('0.0.0.0', TCP_PORT))
+    sock.listen(1)
+    print(f"TCP服务器启动在端口： {TCP_PORT}")
+    LED2.on()
+except Exception as e:
+    print("TCP服务器启动失败:", e)
+    time.sleep(5)
+    machine.reset()  # 如果无法启动服务器，重启设备
 
 # 主循环
 while True:
@@ -237,21 +288,12 @@ while True:
         
     except Exception as e:
         print("服务器错误:", e)
-    
-    # 维持WiFi连接
-    if not wlan.isconnected():
-        LED2.off()
-        print("WiFi断开，正在重新连接...")
-        if not connect_wifi():
-            print("重连失败，等待5秒后重试...")
-            time.sleep(5)
-    else:
-        # WiFi连接后LED2持续闪烁
-        for i in range(10):
-            LED2.on()
-            time.sleep(0.5)
-            LED2.off()
-            time.sleep(0.5)
+        try:
+            sock.close()  # 确保关闭socket
+        except:
+            pass
+        time.sleep(1)  # 等待一秒后重试
+        continue  # 继续主循环
 
 
 

@@ -2,7 +2,7 @@ extends Node2D
 
 var tcp = StreamPeerTCP.new()
 var connected = false
-var ip_address = "192.168.243.49"
+var ip_address = "47.108.90.0"
 var port = 8080
 var connection_timeout = 2.0  # 秒
 var connect_start_time = 0.0
